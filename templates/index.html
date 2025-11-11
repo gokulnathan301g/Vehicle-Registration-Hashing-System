@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Registration Hashing System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Vehicle Registration Hashing System</h1>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('register')">Register Vehicle</button>
+            <button class="tab-button" onclick="showTab('search')">Search Vehicle</button>
+            <button class="tab-button" onclick="showTab('delete')">Delete Vehicle</button>
+            <button class="tab-button" onclick="showTab('view-all')">View All</button>
+        </div>
+
+        <!-- Register Vehicle Tab -->
+        <div id="register" class="tab-content active">
+            <h2>Register New Vehicle</h2>
+            <form id="registerForm">
+                <input type="text" id="regNumber" placeholder="Registration Number (e.g., TN01AB1234)" required>
+                <input type="text" id="ownerName" placeholder="Owner Name" required>
+                <select id="vehicleType" required>
+                    <option value="">Select Vehicle Type</option>
+                    <option value="Car">Car</option>
+                    <option value="Motorcycle">Motorcycle</option>
+                    <option value="Truck">Truck</option>
+                    <option value="Bus">Bus</option>
+                </select>
+                <input type="number" id="year" placeholder="Year" min="1900" max="2024" required>
+                <button type="submit">Register Vehicle</button>
+            </form>
+        </div>
+
+        <!-- Search Vehicle Tab -->
+        <div id="search" class="tab-content">
+            <h2>Search Vehicle</h2>
+            <form id="searchForm">
+                <input type="text" id="searchRegNumber" placeholder="Registration Number" required>
+                <button type="submit">Search</button>
+            </form>
+            <div id="searchResult"></div>
+        </div>
+
+        <!-- Delete Vehicle Tab -->
+        <div id="delete" class="tab-content">
+            <h2>Delete Vehicle</h2>
+            <form id="deleteForm">
+                <input type="text" id="deleteRegNumber" placeholder="Registration Number" required>
+                <button type="submit">Delete Vehicle</button>
+            </form>
+        </div>
+
+        <!-- View All Tab -->
+        <div id="view-all" class="tab-content">
+            <h2>All Registered Vehicles</h2>
+            <button onclick="loadAllVehicles()">Refresh List</button>
+            <div id="allVehicles"></div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
