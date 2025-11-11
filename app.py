@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
+import json
 
 app = Flask(__name__)
 
@@ -8,6 +9,8 @@ class VehicleHashTable:
         self.size = size
         self.table = [[] for _ in range(size)]
         self.count = 0
+        self.data_file = 'vehicles.json'
+        self.load_data()
     
     def hash_function(self, registration_number):
         """Hash function using registration number"""
@@ -16,8 +19,42 @@ class VehicleHashTable:
             hash_value = (hash_value * 31 + ord(char)) % self.size
         return hash_value
     
-    def insert(self, registration_number, owner_name, vehicle_type, year):
-        """Insert vehicle data into hash table"""
+    def save_data(self):
+        """Save data to JSON file"""
+        vehicles = []
+        for bucket in self.table:
+            for reg_num, owner_name, vehicle_type, year in bucket:
+                vehicles.append({
+                    'registration_number': reg_num,
+                    'owner_name': owner_name,
+                    'vehicle_type': vehicle_type,
+                    'year': year
+                })
+        
+        try:
+            with open(self.data_file, 'w') as f:
+                json.dump(vehicles, f, indent=2)
+        except:
+            pass  # Ignore file write errors in production
+    
+    def load_data(self):
+        """Load data from JSON file"""
+        try:
+            if os.path.exists(self.data_file):
+                with open(self.data_file, 'r') as f:
+                    vehicles = json.load(f)
+                    for vehicle in vehicles:
+                        self.insert_without_save(
+                            vehicle['registration_number'],
+                            vehicle['owner_name'],
+                            vehicle['vehicle_type'],
+                            vehicle['year']
+                        )
+        except:
+            pass  # Ignore file read errors
+    
+    def insert_without_save(self, registration_number, owner_name, vehicle_type, year):
+        """Insert without saving to file (used during loading)"""
         index = self.hash_function(registration_number)
         
         # Check if registration already exists
@@ -30,6 +67,12 @@ class VehicleHashTable:
         self.table[index].append((registration_number, owner_name, vehicle_type, year))
         self.count += 1
         return True
+    
+    def insert(self, registration_number, owner_name, vehicle_type, year):
+        """Insert vehicle data into hash table"""
+        result = self.insert_without_save(registration_number, owner_name, vehicle_type, year)
+        self.save_data()
+        return result
     
     def search(self, registration_number):
         """Search for vehicle by registration number"""
@@ -53,6 +96,7 @@ class VehicleHashTable:
             if reg_num == registration_number:
                 del self.table[index][i]
                 self.count -= 1
+                self.save_data()
                 return True
         return False
     

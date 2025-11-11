@@ -4,7 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Registration Hashing System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        h1 {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .tabs {
+            display: flex;
+            background: #34495e;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: #34495e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .tab-button:hover {
+            background: #2c3e50;
+        }
+
+        .tab-button.active {
+            background: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        #message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        #message.show {
+            transform: translateX(0);
+        }
+
+        #message.success {
+            background: #27ae60;
+        }
+
+        #message.error {
+            background: #e74c3c;
+        }
+
+        .vehicle-card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .vehicle-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .vehicle-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 3px;
+            border-left: 4px solid #3498db;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        #searchResult {
+            margin-top: 20px;
+        }
+
+        #allVehicles {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -64,6 +234,194 @@
         <div id="message"></div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab and activate button
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Message display function
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `show ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // Register vehicle form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                registration_number: document.getElementById('regNumber').value,
+                owner_name: document.getElementById('ownerName').value,
+                vehicle_type: document.getElementById('vehicleType').value,
+                year: document.getElementById('year').value
+            };
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error registering vehicle', 'error');
+            }
+        });
+
+        // Search vehicle form
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const regNumber = document.getElementById('searchRegNumber').value;
+            
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ registration_number: regNumber })
+                });
+                
+                const result = await response.json();
+                const searchResult = document.getElementById('searchResult');
+                
+                if (result.success) {
+                    const vehicle = result.vehicle;
+                    searchResult.innerHTML = `
+                        <div class="vehicle-card">
+                            <h3>Vehicle Found</h3>
+                            <div class="vehicle-info">
+                                <div class="info-item">
+                                    <div class="info-label">Registration Number:</div>
+                                    <div>${vehicle.registration_number}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Owner Name:</div>
+                                    <div>${vehicle.owner_name}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Vehicle Type:</div>
+                                    <div>${vehicle.vehicle_type}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Year:</div>
+                                    <div>${vehicle.year}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    searchResult.innerHTML = `<p style="color: #e74c3c; text-align: center;">${result.message}</p>`;
+                }
+            } catch (error) {
+                showMessage('Error searching vehicle', 'error');
+            }
+        });
+
+        // Delete vehicle form
+        document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const regNumber = document.getElementById('deleteRegNumber').value;
+            
+            if (!confirm(`Are you sure you want to delete vehicle ${regNumber}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ registration_number: regNumber })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    document.getElementById('deleteForm').reset();
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error deleting vehicle', 'error');
+            }
+        });
+
+        // Load all vehicles
+        async function loadAllVehicles() {
+            try {
+                const response = await fetch('/all_vehicles');
+                const result = await response.json();
+                const allVehiclesDiv = document.getElementById('allVehicles');
+                
+                if (result.vehicles.length === 0) {
+                    allVehiclesDiv.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No vehicles registered yet.</p>';
+                    return;
+                }
+                
+                let html = '';
+                result.vehicles.forEach(vehicle => {
+                    html += `
+                        <div class="vehicle-card">
+                            <h3>${vehicle.registration_number}</h3>
+                            <div class="vehicle-info">
+                                <div class="info-item">
+                                    <div class="info-label">Owner:</div>
+                                    <div>${vehicle.owner_name}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Type:</div>
+                                    <div>${vehicle.vehicle_type}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Year:</div>
+                                    <div>${vehicle.year}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                allVehiclesDiv.innerHTML = html;
+            } catch (error) {
+                showMessage('Error loading vehicles', 'error');
+            }
+        }
+
+        // Load all vehicles when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllVehicles();
+        });
+    </script>
 </body>
 </html>
