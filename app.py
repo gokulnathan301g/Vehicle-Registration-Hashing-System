@@ -9,7 +9,11 @@ class VehicleHashTable:
         self.size = size
         self.table = [[] for _ in range(size)]
         self.count = 0
-        self.data_file = 'vehicles.json'
+        # Use data directory for Docker volume mounting
+        self.data_dir = 'data'
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
+        self.data_file = os.path.join(self.data_dir, 'vehicles.json')
         self.load_data()
     
     def hash_function(self, registration_number):
